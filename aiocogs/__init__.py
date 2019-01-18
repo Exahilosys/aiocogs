@@ -259,6 +259,7 @@ async def latency(execute, count = 1):
     return (function(delays) for function in functions)
 
 
+@helpers.decorate
 def infinite(execute, signal = None, loop = None):
 
     """
