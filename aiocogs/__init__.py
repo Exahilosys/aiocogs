@@ -11,7 +11,7 @@ __version__ = '0.0.0'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
-           'latency')
+           'latency', 'infinite')
 
 
 __marker = object()
@@ -257,3 +257,30 @@ async def latency(execute, count = 1):
     functions = (min, max, numpy.mean, numpy.std)
 
     return (function(delays) for function in functions)
+
+
+def infinite(execute, signal = None, loop = None):
+
+    """
+    Crate an infintely looping task calling the function after signal completes.
+    """
+
+    if not loop:
+
+        loop = asyncio.get_event_loop()
+
+    async def wrapper():
+
+        if signal:
+
+            await signal
+
+        while True:
+
+            await execute()
+
+    coroutine = wrapper()
+
+    task = loop.create_task(coroutine)
+
+    return task
