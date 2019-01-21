@@ -2,7 +2,6 @@ import asyncio
 import threading
 import operator
 import time
-import numpy
 
 from . import helpers
 
@@ -11,7 +10,7 @@ __version__ = '0.0.0'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
-           'latency', 'infinite')
+           'infinite')
 
 
 __marker = object()
@@ -228,35 +227,6 @@ async def flatten(generator,
     """
 
     return [apply(value) async for value in generator if predicate(value)]
-
-
-async def latency(execute, count = 1):
-
-    """
-    Get statistics related to the execution time of the function.
-    """
-
-    records = []
-
-    iterator = range(count + 1)
-
-    for index in reversed(iterator):
-
-        record = time.time()
-
-        records.append(record)
-
-        if not index:
-
-            break
-
-        await execute()
-
-    delays = numpy.diff(records)
-
-    functions = (min, max, numpy.mean, numpy.std)
-
-    return (function(delays) for function in functions)
 
 
 @helpers.decorate
