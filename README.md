@@ -1,7 +1,7 @@
 ## Installing
 
 ```
-python3 -m pip install git+https://github.com/Exahilosys/aiocogs.git
+python3 -m pip install aiocogs
 ```
 
 ## Usage

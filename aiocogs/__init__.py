@@ -6,7 +6,7 @@ import time
 from . import helpers
 
 
-__version__ = '0.0.0'
+__version__ = '1.0.0'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
