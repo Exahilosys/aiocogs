@@ -1,12 +1,12 @@
 import asyncio
 import threading
 import operator
-import time
+import inspect
 
 from . import helpers
 
 
-__version__ = '1.2.0'
+__version__ = '1.2.2'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
@@ -286,7 +286,11 @@ class Stream:
 
         for function in single:
 
-            signal = await function(*args, **kwargs)
+            signal = function(*args, **kwargs)
+
+            if inspect.isawaitable(signal):
+
+                signal = await signal
 
             if not signal is self.signal:
 
