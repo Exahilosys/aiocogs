@@ -6,7 +6,7 @@ import time
 from . import helpers
 
 
-__version__ = '1.0.0'
+__version__ = '1.1.2'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
@@ -89,7 +89,7 @@ async def ready(*tasks, loop = None):
         left -= 1
 
 
-@helpers.decorate
+@helpers.decorate(0)
 def valve(function, determine, state = set(), loop = None):
 
     """
@@ -130,7 +130,7 @@ def valve(function, determine, state = set(), loop = None):
     return observe
 
 
-@helpers.decorate
+@helpers.decorate(0)
 def cache(function, determine, maxsize = float('inf'), loop = None):
 
     """
@@ -229,7 +229,7 @@ async def flatten(generator,
     return [apply(value) async for value in generator if predicate(value)]
 
 
-@helpers.decorate
+@helpers.decorate(0)
 def infinite(execute, signal = None, loop = None):
 
     """
@@ -255,3 +255,50 @@ def infinite(execute, signal = None, loop = None):
     task = loop.create_task(coroutine)
 
     return task
+
+
+class Stream:
+
+    """
+    Progressively call functions until prompted to stop by returning signal.
+    Specify which functions be called together or in order with bool on sub.
+    Arguments passed in start will be used for all subsequent calls.
+    Last function called before ending loop in start returns.
+    """
+
+    __slots__ = ('_loop', '_stores')
+
+    signal = object()
+
+    def __init__(self, loop = None):
+
+        self._loop = loop or asyncio.get_event_loop()
+
+        self._stores = ([], [])
+
+    @helpers.decorate(1)
+    def sub(self, function, group):
+
+        self._stores[group].append(function)
+
+    async def start(self, *args, **kwargs):
+
+        bundle, single = self._stores
+
+        coroutines = (function(*args, **kwargs) for function in bundle)
+
+        future = asyncio.gather(*coroutines, loop = self._loop)
+
+        asyncio.ensure_future(future, loop = self._loop)
+
+        for function in single:
+
+            signal = await function(*args, **kwargs)
+
+            if not signal is self.signal:
+
+                continue
+
+            break
+
+        return function

@@ -28,19 +28,27 @@ def rank(compare, iterable, root, key = None):
     return index
 
 
-def decorate(value, position = 0):
+def decorate(spot):
 
     """
     Turn a function into a decorator.
-    Assumes its first argument is callable.
+    Inserts callable argument to spot.
     """
 
-    def decorator(*args, **kwargs):
+    def wrapper(value):
 
-        def wrapper(function):
+        def decorator(*args, **kwargs):
 
-            return value(function, *args, **kwargs)
+            args = list(args)
 
-        return wrapper
+            def wrapper(function):
 
-    return decorator
+                args.insert(spot, function)
+
+                return value(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    return wrapper
