@@ -1,7 +1,7 @@
 
 """
-Call with `[size] [limit]` like: `10 5`
-This should always take no more than `size + limit` seconds.
+Call with `[size]` like: `10`
+This should always take no more than `size ` seconds.
 """
 
 import asyncio
@@ -12,24 +12,14 @@ loop = asyncio.get_event_loop()
 
 wait = 4
 
-async def period(*args, **kwargs):
-
-    """
-    Dynamically return timeouts according to the state.
-    """
-
-    return wait
-
-@aiocogs.valve(period)
-async def execute(wait):
+@aiocogs.valve(wait)
+async def execute(index):
 
     """
     Just wait for a bit.
     """
 
-    await asyncio.sleep(wait)
-
-    print('complete')
+    print('called', index)
 
 async def main(size, limit):
 
@@ -39,23 +29,19 @@ async def main(size, limit):
 
     index = 0
 
-    tasks = []
-
     while True:
 
-        # careful, this is not a coroutine function!
-        # it will always return either None or a task,
-        # signifiying whether the attached function was
-        # executed or ignored respectively
-        task = execute(limit)
+        # this is not the result of the call!
+        # it's either a coroutine or None,
+        # depending on whether the attached function
+        # was executed or ignored respectively
+        coroutine = execute(index)
 
-        if not task is None:
+        if coroutine:
 
             # this means the valve
-            # was open, got called
-            tasks.append(task)
-
-            print(index, 'called')
+            # was open, we can await
+            await coroutine
 
         index += 1
 
@@ -64,14 +50,6 @@ async def main(size, limit):
             break
 
         await asyncio.sleep(1)
-
-    # the reason we don't use aiocogs.ready here is
-    # because we know tasks that got in first will finish
-    # first as well, all of them wait for the same period
-    for task in tasks:
-
-        # sanity check
-        result = await task
 
 if __name__ == '__main__':
 

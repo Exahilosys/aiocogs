@@ -1,7 +1,7 @@
 
 """
 Call with nothing.
-This will take 2 secs to start and continue in perpetuity.
+This will take 2 seconds to start and continue in perpetuity.
 """
 
 import asyncio

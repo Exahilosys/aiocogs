@@ -1,7 +1,7 @@
 
 """
 Call with `[size] [limit]` like: `10 5`
-On average, this should take `Σx` where `x ∈ [1, limit]`
+On average, this should take `Σx` seconds where `x ∈ [1, limit]`
 """
 
 import asyncio

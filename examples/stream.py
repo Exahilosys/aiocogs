@@ -2,7 +2,7 @@
 """
 Call with something.
 This will take 3 secs.
-On average, this should take less than `Σx` where `x ∈ [1, limit]`
+On average, this should take less than `Σx` seconds where `x ∈ [1, limit]`
 """
 
 import asyncio

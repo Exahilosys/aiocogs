@@ -6,7 +6,7 @@ import time
 from . import helpers
 
 
-__version__ = '1.1.2'
+__version__ = '1.2.0'
 
 
 __all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
@@ -90,42 +90,35 @@ async def ready(*tasks, loop = None):
 
 
 @helpers.decorate(0)
-def valve(function, determine, state = set(), loop = None):
+def valve(function, wait, limit = 1, state = [], loop = None):
 
     """
-    Only allow a function's execution during a period.
-    `determine` returns seconds, called with the same arguments.
+    Disallow a function's execution during a period.
     """
 
     if not loop:
 
         loop = asyncio.get_event_loop()
 
-    async def manage(coroutine):
+    async def manage():
 
-        limit = await coroutine
-
-        await asyncio.sleep(limit, loop = loop)
+        await asyncio.sleep(wait, loop = loop)
 
         state.remove(function)
 
     def observe(*args, **kwargs):
 
-        if function in state:
+        if state.count(function) == limit:
 
             return
 
-        state.add(function)
+        state.append(function)
 
-        functions = (determine, function)
+        coroutine = manage()
 
-        fetcher, execute = (function(*args, **kwargs) for function in functions)
+        loop.create_task(coroutine)
 
-        coroutines = (manage(fetcher), execute)
-
-        managing, task = map(loop.create_task, coroutines)
-
-        return task
+        return function(*args, **kwargs)
 
     return observe
 
