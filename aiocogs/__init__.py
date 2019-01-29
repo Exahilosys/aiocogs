@@ -6,11 +6,11 @@ import inspect
 from . import helpers
 
 
-__version__ = '1.2.2'
+__version__ = '1.3.0'
 
 
-__all__ = ('sort', 'thread', 'ready', 'valve', 'cache', 'reduce', 'flatten',
-           'infinite')
+__all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
+           'Stream', 'Valve', 'throttle', 'Sling')
 
 
 __marker = object()
@@ -87,40 +87,6 @@ async def ready(*tasks, loop = None):
         yield await queue.get()
 
         left -= 1
-
-
-@helpers.decorate(0)
-def valve(function, wait, limit = 1, state = [], loop = None):
-
-    """
-    Disallow a function's execution during a period.
-    """
-
-    if not loop:
-
-        loop = asyncio.get_event_loop()
-
-    async def manage():
-
-        await asyncio.sleep(wait, loop = loop)
-
-        state.remove(function)
-
-    def observe(*args, **kwargs):
-
-        if state.count(function) == limit:
-
-            return
-
-        state.append(function)
-
-        coroutine = manage()
-
-        loop.create_task(coroutine)
-
-        return function(*args, **kwargs)
-
-    return observe
 
 
 @helpers.decorate(0)
@@ -299,3 +265,123 @@ class Stream:
             break
 
         return function
+
+
+class Valve:
+
+    __slots__  = ('_loop', '_state')
+
+    def __init__(self, state = None, loop = None):
+
+        if not loop:
+
+            loop = asyncio.get_event_loop()
+
+        self._loop = loop
+
+        self._state = state or []
+
+    @property
+    def state(self):
+
+        """
+        Get the state.
+        """
+
+        return self._state
+
+    def count(self, key):
+
+        """
+        Get the number of values adhering to the key.
+        """
+
+        return len(tuple(filter(key, self._state)))
+
+    def left(self, key, limit):
+
+        """
+        Get the number of room left according to the limit.
+        """
+
+        return limit - self.count(key)
+
+    def observe(self, value, period):
+
+        """
+        Track value, wait for period and discard it.
+        """
+
+        manage = lambda task: self._state.remove(value)
+
+        coroutine = asyncio.sleep(period)
+
+        self._state.append(value)
+
+        task = self._loop.create_task(coroutine)
+
+        task.add_done_callback(manage)
+
+        return task
+
+    def check(self, value, period, limit, key, bypass = False):
+
+        """
+        Check if the valve is open. If it is, track value.
+        Returns the number of spaces left before adding value.
+        """
+
+        if not key:
+
+            key = lambda other: other == value
+
+        left = self.left(key, limit)
+
+        if bypass or left:
+
+            self.observe(value, period)
+
+        return left
+
+
+@helpers.decorate(0)
+def throttle(function, period, limit = 1, loop = None, signal = None):
+
+    """
+    Disallow a function's execution during a period.
+    """
+
+    valve = Valve(loop = loop)
+
+    key = lambda value: value is function
+
+    def observe(*args, **kwargs):
+
+        if not valve.check(function, period, limit, key):
+
+            return signal
+
+        return function(*args, **kwargs)
+
+    return observe
+
+
+class Sling(Valve):
+
+    __all__ = ()
+
+    def check(self, value, period, limit, rate, key, bypass = False):
+
+        """
+        Check if the valve is open. Calculate period and track state.
+        """
+
+        left = self.left(key, limit)
+
+        if bypass or left:
+
+            period *= (left / limit) * rate
+
+            self.observe(value, period)
+
+        return left

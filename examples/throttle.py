@@ -12,7 +12,7 @@ loop = asyncio.get_event_loop()
 
 wait = 4
 
-@aiocogs.valve(wait)
+@aiocogs.throttle(wait)
 async def execute(index):
 
     """
@@ -21,7 +21,7 @@ async def execute(index):
 
     print('called', index)
 
-async def main(size, limit):
+async def main(size):
 
     """
     Call the valve, check if there was a call and handle the tasks returned.
