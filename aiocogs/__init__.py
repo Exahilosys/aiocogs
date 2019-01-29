@@ -6,7 +6,7 @@ import inspect
 from . import helpers
 
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 
 __all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
@@ -330,10 +330,6 @@ class Valve:
         Check if the valve is open. If it is, track value.
         Returns the number of spaces left before adding value.
         """
-
-        if not key:
-
-            key = lambda other: other == value
 
         left = self.left(key, limit)
 
