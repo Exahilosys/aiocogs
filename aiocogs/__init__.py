@@ -6,7 +6,7 @@ import inspect
 from . import helpers
 
 
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 
 __all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
@@ -366,7 +366,7 @@ class Sling(Valve):
 
     __all__ = ()
 
-    def check(self, value, period, limit, rate, key, bypass = False):
+    def check(self, value, period, limit, trail, rate, key):
 
         """
         Check if the valve is open. Calculate period and track state.
@@ -374,10 +374,8 @@ class Sling(Valve):
 
         left = self.left(key, limit)
 
-        if bypass or left:
+        period *= ((left + trail) / limit) * rate
 
-            period *= (left / limit) * rate
+        self.observe(value, period)
 
-            self.observe(value, period)
-
-        return left
+        return max(left, 0)
