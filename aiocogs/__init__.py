@@ -6,14 +6,14 @@ import inspect
 from . import helpers
 
 
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 
 __all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
            'Stream', 'Valve', 'throttle', 'Sling')
 
 
-__marker = object()
+signal = object()
 
 
 async def sort(generator, key = None, reverse = False):
@@ -155,14 +155,14 @@ def cache(function, determine, maxsize = float('inf'), loop = None):
     return wrapper
 
 
-async def reduce(function, iterable, first = __marker):
+async def reduce(function, iterable, first = signal):
 
     """
     Similar to an async version of functools.reduce except it's a generator
     yielding all results as they are computed. Iterate through for the final.
     """
 
-    if first is __marker:
+    if first is signal:
 
         result = await iterable.__anext__()
 
@@ -189,7 +189,7 @@ async def flatten(generator,
 
 
 @helpers.decorate(0)
-def infinite(execute, signal = None, loop = None):
+def infinite(execute, wait = None, signal = signal, loop = None):
 
     """
     Crate an infintely looping task calling the function after signal completes.
@@ -201,13 +201,19 @@ def infinite(execute, signal = None, loop = None):
 
     async def wrapper():
 
-        if signal:
+        if wait:
 
-            await signal
+            await wait
 
         while True:
 
-            await execute()
+            result = await execute()
+
+            if not result is signal:
+
+                continue
+
+            break
 
     coroutine = wrapper()
 
