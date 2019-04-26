@@ -6,9 +6,7 @@ with open('README.md') as file:
 
 name = 'aiocogs'
 
-module = __import__(name)
-
-version = module.__version__
+version = '1.3.4'
 
 author = 'Exahilosys'
 

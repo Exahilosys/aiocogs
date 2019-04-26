@@ -6,9 +6,6 @@ import inspect
 from . import helpers
 
 
-__version__ = '1.3.3'
-
-
 __all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
            'Stream', 'Valve', 'throttle', 'Sling')
 
