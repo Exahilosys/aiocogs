@@ -1,3 +1,4 @@
+import sys, os
 import asyncio
 import threading
 import operator
@@ -10,7 +11,7 @@ __all__ = ('sort', 'thread', 'ready', 'cache', 'reduce', 'flatten', 'infinite',
            'Stream', 'Valve', 'throttle', 'Sling')
 
 
-signal = object()
+marker = object()
 
 
 async def sort(generator, key = None, reverse = False):
@@ -152,14 +153,14 @@ def cache(function, determine, maxsize = float('inf'), loop = None):
     return wrapper
 
 
-async def reduce(function, iterable, first = signal):
+async def reduce(function, iterable, first = marker):
 
     """
     Similar to an async version of functools.reduce except it's a generator
     yielding all results as they are computed. Iterate through for the final.
     """
 
-    if first is signal:
+    if first is marker:
 
         result = await iterable.__anext__()
 
@@ -186,7 +187,7 @@ async def flatten(generator,
 
 
 @helpers.decorate(0)
-def infinite(execute, wait = None, signal = signal, loop = None):
+def infinite(execute, wait = None, signal = marker, loop = None):
 
     """
     Crate an infintely looping task calling the function after signal completes.
@@ -206,7 +207,7 @@ def infinite(execute, wait = None, signal = signal, loop = None):
 
             result = await execute()
 
-            if not result is signal:
+            if not result is marker:
 
                 continue
 
@@ -382,3 +383,42 @@ class Sling(Valve):
         self.observe(value, period)
 
         return max(left, 0)
+
+
+async def interload(path, callback):
+
+    """
+    Import module upon changes in path and pass to callback.
+    Storage in sys.modules allows for relative imports within the package.
+    Note that `watchgod` must be manually installed.
+    """
+
+    import watchgod # install
+
+    watching = watchgod.awatch(path)
+
+    (lead, name) = os.path.split(path)
+
+    origin = os.path.join(path, '__init__.py')
+
+    while True:
+
+        spec = importlib.util.spec_from_file_location(name, origin)
+
+        module = importlib.util.module_from_spec(spec)
+
+        sys.modules[name] = module
+
+        spec.loader.exec_module(module)
+
+        callback(module)
+
+        await watching.__anext__()
+
+        for trail in tuple(sys.modules):
+
+            if not trail.startswith(name):
+
+                continue
+
+            del sys.modules[trail]
