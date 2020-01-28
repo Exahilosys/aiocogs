@@ -25,16 +25,5 @@ setuptools.setup(
     license = 'MIT',
     description = 'Utilities for asyncio.',
     long_description = readme,
-    long_description_content_type = 'text/markdown',
-    include_package_data = True,
-    classifiers = [
-        'License :: OSI Approved :: MIT License',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.6',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Utilities',
-    ]
+    long_description_content_type = 'text/markdown'
 )
